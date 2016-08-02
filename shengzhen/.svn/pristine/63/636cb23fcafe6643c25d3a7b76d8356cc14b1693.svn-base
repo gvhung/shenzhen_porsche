@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+  <appSettings>
+    <add key="AppVer" value="1.01"/>
+    <add key="AppTitle" value="汽车服务状态信息发布与监控"/>
+    <add key="CopyRight" value="广州润田科技有限公司"/>
+    <add key="Connectstring" value=""/>
+    <add key="Remind" value="1"/>
+    <add key ="LastUserID" value=""/>
+    <add key ="LastDate" value=""/>
+  </appSettings>
+</configuration>

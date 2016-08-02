@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<product>
+  <version>1.01</version>
+  <description>修正</description>
+  <filelist count="1" sourcepath="./update/">
+	 <item name="Workshop.exe" size="">
+      <value />
+    </item>
+  </filelist>
+</product>

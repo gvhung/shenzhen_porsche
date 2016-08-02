@@ -1,0 +1,206 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Text;
+using System.Windows.Forms;
+
+namespace Workshop
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+        private Point mouse_offset;
+
+        private int EditRow = -1;
+        private int EditCol = -1;
+        private DevExpress.XtraGrid.Columns.GridColumn FocusCol = null;
+        private int StartX = 0;
+        private int StartY = 0;
+        private string CellValue = string.Empty;
+        private void button1_Click(object sender, EventArgs e)
+        {
+            string sqlstring = "Select * from Calendar";
+            DataTable Dt= SQLDbHelper.Query(sqlstring).Tables[0];
+            DataRow Dr = Dt.NewRow();
+            gridControl1.DataSource = Dt;
+            gridView1.Columns[0].Visible = false;
+            gridView1.Columns[1].OptionsColumn.AllowMerge = DevExpress.Utils.DefaultBoolean.True;
+            gridView1.Columns[1].Width = 65;
+            gridView1.Columns[1].Caption = "时间";
+
+            sqlstring = "Select  getdate() as '1',getdate() as'2',getdate() as'机电',getdate() as'钣金',getdate() as'PDI' from Calendar where 1=0";
+            gridControl2.DataSource = SQLDbHelper.Query(sqlstring).Tables[0];
+
+            gridView2.Columns[0].Visible = false;
+            gridView2.Columns[1].Width = 65;
+            gridView2.Columns[1].Caption = string.Empty;
+            gridView2.Columns[2].Width = gridView1.Columns[2].Width + gridView1.Columns[3].Width + gridView1.Columns[4].Width;
+            gridView2.Columns[3].Width = gridView1.Columns[5].Width + gridView1.Columns[6].Width;
+            gridView2.Columns[4].Width = gridView1.Columns[7].Width + gridView1.Columns[8].Width;
+            for (int i = 2; i < gridView1.Columns.Count;i++)
+            {
+                gridView1.Columns[i].OptionsColumn.AllowMerge = DevExpress.Utils.DefaultBoolean.True;
+            }
+        }
+        private void gridView1_FocusedColumnChanged(object sender, DevExpress.XtraGrid.Views.Base.FocusedColumnChangedEventArgs e)
+        {
+            FocusCol = e.FocusedColumn;
+            EditCol = e.FocusedColumn.VisibleIndex;
+        }
+
+        private void gridView1_FocusedRowChanged(object sender, DevExpress.XtraGrid.Views.Base.FocusedRowChangedEventArgs e)
+        {
+            EditRow = e.FocusedRowHandle;
+            if (e.FocusedRowHandle > -1 && FocusCol != null)
+            {
+                CellValue = gridView1.GetRowCellValue(e.FocusedRowHandle, FocusCol).ToString();
+            }
+        }
+        private void gridView1_DoubleClick(object sender, EventArgs e)
+        {
+            Form3 fm3 = new Form3();
+            fm3.AddCarHandle+=new Form3.AddCar(fm3_AddCarHandle);
+            fm3.Show();
+            
+        }
+        private void fm3_AddCarHandle(string carno)
+        {
+            int wid=0;
+            gridView1.SetRowCellValue(EditRow, FocusCol, carno);
+            for (int i = 0; i < FocusCol.VisibleIndex; i++)
+            {
+                wid = wid + gridView1.Columns[i].Width;
+            }
+            DevExpress.XtraEditors.PanelControl pc1 = new DevExpress.XtraEditors.PanelControl();
+            gridControl1.Controls.Add(pc1);
+            pc1.Width = FocusCol.Width;
+            pc1.Height = gridView1.RowHeight;
+            pc1.Left = wid + gridControl1.Left;
+            pc1.Top = gridView1.RowHeight * EditRow + gridView1.ColumnPanelRowHeight + gridView1.RowSeparatorHeight * EditRow;
+
+            Label lb = new Label();
+            lb.Text = "车牌号码:" + carno;
+            lb.AutoSize = true;
+            pc1.Controls.Add(lb);
+            gridView1.RefreshData();
+            
+        }
+        private void label1_MouseDown(object sender, MouseEventArgs e)
+        {
+            mouse_offset = new Point(-e.X, -e.Y);//
+
+        }
+
+        private void label1_MouseMove(object sender, MouseEventArgs e)
+        {
+            ((Control)sender).Cursor = Cursors.Arrow;//设置拖动时鼠标箭头
+            if (e.Button == MouseButtons.Left)
+            {
+                Point mousePos = Control.MousePosition;
+                mousePos.Offset(mouse_offset.X, mouse_offset.Y);//设置偏移
+                ((Control)sender).Location = ((Control)sender).Parent.PointToClient(mousePos);
+            }
+
+        }
+        private void gridView1_CellValueChanged(object sender, DevExpress.XtraGrid.Views.Base.CellValueChangedEventArgs e)
+        {
+        }
+
+        private void gridView1_CellMerge(object sender, DevExpress.XtraGrid.Views.Grid.CellMergeEventArgs e)
+        {
+            string val1 = gridView1.GetRowCellValue(e.RowHandle1, e.Column).ToString();
+            string val2 = gridView1.GetRowCellValue(e.RowHandle2, e.Column).ToString();
+            if (val1 == val2 && val1 != string.Empty)
+            {
+                e.Merge = true;
+                e.Handled = true;
+            }
+            else
+            {
+                e.Merge = false;
+                e.Handled = true;
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            Form2 fm2 = new Form2();
+            fm2.Show();
+        }
+
+        private void gridView1_RowCellStyle(object sender, DevExpress.XtraGrid.Views.Grid.RowCellStyleEventArgs e)
+        {
+            if (gridView1.GetRowCellValue(e.RowHandle, e.Column).ToString() != string.Empty)
+            {
+                e.Appearance.BackColor = Color.Blue;
+            }
+        }
+
+        private void gridView1_MouseDown(object sender, MouseEventArgs e)
+        {
+            StartX = e.X;
+            StartY = e.Y;
+        }
+
+        private void gridView1_MouseUp(object sender, MouseEventArgs e)
+        {
+            //int XValue = e.X - StartX;
+            //int YValue = e.Y - StartY;
+            //int newrow = EditRow + YValue / gridView1.RowHeight;
+            //int newcolindex = EditCol + XValue / FocusCol.Width+1;
+            //DevExpress.XtraGrid.Columns.GridColumn newcol = null;
+            //foreach (DevExpress.XtraGrid.Columns.GridColumn gc in gridView1.Columns)
+            //{
+            //    if (gc.VisibleIndex == newcolindex)
+            //    {
+            //        newcol = gc;
+            //    }
+            //}
+            //label1.Text = newrow.ToString();
+            //if (newcol != null && newrow>0)
+            //{
+            //    gridView1.SetRowCellValue(newrow, newcol, CellValue);
+            //}
+        }
+        private bool down = false;
+        private void panelControl1_MouseDown(object sender, MouseEventArgs e)
+        {
+            down = true;
+        }
+
+        private void panelControl1_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (down)
+            {
+                panelControl1.Left = e.X;
+                panelControl1.Top = e.Y;
+            }
+        }
+
+        private void panelControl1_MouseMove(object sender, MouseEventArgs e)
+        {
+            down = false;
+        }
+
+        private void gridView1_DragObjectOver(object sender, DevExpress.XtraGrid.Views.Base.DragObjectOverEventArgs e)
+        {
+            //label1.Text = "gridView1_DragObjectOver";
+            label1.Text = e.DragObject.ToString();
+        }
+
+        private void gridView1_DragObjectDrop(object sender, DevExpress.XtraGrid.Views.Base.DragObjectDropEventArgs e)
+        {
+            label1.Text = "gridView1_DragObjectDrop";
+        }
+
+        private void gridView1_DragObjectStart(object sender, DevExpress.XtraGrid.Views.Base.DragObjectStartEventArgs e)
+        {
+            label1.Text = "gridView1_DragObjectStart";
+        }
+    }
+}
